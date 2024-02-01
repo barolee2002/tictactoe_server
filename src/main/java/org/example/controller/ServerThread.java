@@ -29,6 +29,7 @@ public class ServerThread implements Runnable {
     private int clientNumber;
     private BufferedReader is;
     private BufferedWriter os;
+    private boolean isReady = false;
     private boolean isClosed;
     private Room room;
     private UserDAO userDAO;
@@ -40,6 +41,12 @@ public class ServerThread implements Runnable {
     
     public BufferedWriter getOs() {
         return os;
+    }
+    public void setIsReady(boolean isReady) {
+        this.isReady = isReady;
+    }
+    public boolean getIsready() {
+        return isReady;
     }
 
     public void setRoom(Room room) {
@@ -61,6 +68,9 @@ public class ServerThread implements Runnable {
 
     public String getClientIP() {
         return clientIP;
+    }
+    public Integer getRank() {
+        return user.getNumberOfGame() + user.getNumberOfwin() * 5;
     }
 
     public void setUser(User user) {
@@ -114,6 +124,7 @@ public class ServerThread implements Runnable {
                 if (message == null) {
                     break;
                 }
+                System.out.println("Message: " + message);
                 String[] messageSplit = message.split(",");
                 //Xác minh
                 if(messageSplit[0].equals("client-verify")){
@@ -121,17 +132,14 @@ public class ServerThread implements Runnable {
                     User user1 = userDAO.verifyUser(new User(messageSplit[1], messageSplit[2]));
                     if(user1==null)
                         write("wrong-user,"+messageSplit[1]+","+messageSplit[2]);
-                    else if(!user1.getIsOnline()&&!userDAO.checkIsBanned(user1)){
+                    else if(!user1.getIsOnline()){
                         write("login-success,"+getStringFromUser(user1));
                         this.user = user1;
                         userDAO.updateToOnline(this.user.getID());
                         Server.serverThreadBus.boardCast(clientNumber, "chat-server,"+user1.getNickname()+" đang online");
 
-                    } else if(!userDAO.checkIsBanned(user1)){
+                    } else {
                         write("dupplicate-login,"+messageSplit[1]+","+messageSplit[2]);
-                    }
-                    else{
-                        write("banned-user,"+messageSplit[1]+","+messageSplit[2]);
                     }
                 }
                 //Xử lý đăng kí
@@ -165,12 +173,6 @@ public class ServerThread implements Runnable {
                     System.out.println(res);
                     write(res);
                 }
-//                //Xử lý chat toàn server
-//                if(messageSplit[0].equals("chat-server")){
-//                    Server.serverThreadBus.boardCast(clientNumber,messageSplit[0]+","+ user.getNickname()+" : "+ messageSplit[1]);
-//
-//                }
-                //Xử lý vào phòng trong chức năng tìm kiếm phòng
                 if(messageSplit[0].equals("go-to-room")){
                     int roomName = Integer.parseInt(messageSplit[1]);
                     boolean isFinded = false;
@@ -246,7 +248,8 @@ public class ServerThread implements Runnable {
                 if (messageSplit[0].equals("quick-room")) {
                     boolean isFinded = false;
                     for (ServerThread serverThread : Server.serverThreadBus.getListServerThreads()) {
-                        if (serverThread.room != null && serverThread.room.getNumberOfUser() == 1 && serverThread.room.getPassword().equals(" ")) {
+                        if (serverThread.room != null && serverThread.room.getNumberOfUser() == 1 && serverThread.room.getPassword().equals(" ") && Math.abs(serverThread.room.getUser1().getRank() - this.getRank()) <= 100) {
+
                             serverThread.room.setUser2(this);
                             this.room = serverThread.room;
                             room.increaseNumberOfGame();
@@ -327,13 +330,24 @@ public class ServerThread implements Runnable {
                     userDAO.addWinGame(this.user.getID());
                     room.increaseNumberOfGame();
                     room.getCompetitor(clientNumber).write("caro,"+messageSplit[1]+","+messageSplit[2]);
-                    room.boardCast("new-game,");
+                    room.boardCast("rematch-game,");
+//                    room.boardCast("new-game,");
                 }
                 if(messageSplit[0].equals("lose")){
                     userDAO.addWinGame(room.getCompetitor(clientNumber).user.getID());
                     room.increaseNumberOfGame();
                     room.getCompetitor(clientNumber).write("competitor-time-out");
-                    write("new-game,");
+                    room.boardCast("rematch-game,");
+
+//                    write("new-game,");
+                }
+                if(messageSplit[0].equals("confirm-rematch-game")){
+                    this.setIsReady(true);
+                    assert room != null;
+                    if(room.getUser1().getIsready() && room.getUser2().getIsready()) {
+                        room.boardCast("new-game,");
+
+                    }
                 }
                 if(messageSplit[0].equals("draw-request")){
                     room.getCompetitor(clientNumber).write(message);

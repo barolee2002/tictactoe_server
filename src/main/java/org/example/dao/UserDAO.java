@@ -115,40 +115,8 @@ public class UserDAO extends DAO{
         }
         return false;
     }
-    
-    public boolean checkIsBanned(User user){
-        try {
-            PreparedStatement preparedStatement = con.prepareStatement("SELECT * FROM banned_user WHERE ID_User = ?");
-            preparedStatement.setInt(1, user.getID());
-            System.out.println(preparedStatement);
-            ResultSet rs = preparedStatement.executeQuery();
-            if (rs.next()) {
-                return true;
-            }
 
-        } catch (SQLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return false;
-    }
 
-    public void updateBannedStatus(User user,boolean ban){
-        try {
-            PreparedStatement preparedStatement1 = con.prepareStatement("INSERT INTO `banned_user`(`ID_User`) VALUES (?)");
-            PreparedStatement preparedStatement2 = con.prepareStatement("DELETE FROM `banned_user` WHERE ID_User=?");
-            if(ban){
-                preparedStatement1.setInt(1, user.getID());
-                preparedStatement1.executeUpdate();
-            } else{
-                preparedStatement2.setInt(1, user.getID());
-                preparedStatement2.executeUpdate();
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-    }
-    
     public void updateToOnline(int ID) {
         try {
             PreparedStatement preparedStatement = con.prepareStatement("UPDATE user\n"
@@ -265,35 +233,6 @@ public class UserDAO extends DAO{
             e.printStackTrace();
         }
         return false;
-    }
-    
-    public void addFriendShip(int ID1, int ID2){
-        try {
-            PreparedStatement preparedStatement = con.prepareStatement("INSERT INTO friend(ID_User1, ID_User2)\n" +
-"VALUES (?,?)");
-            preparedStatement.setInt(1, ID1);
-            preparedStatement.setInt(2, ID2);
-            System.out.println(preparedStatement);
-            preparedStatement.executeUpdate();
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-    }
-    
-    public void removeFriendship(int ID1, int ID2){
-        try {
-            PreparedStatement preparedStatement = con.prepareStatement("DELETE FROM friend\n" +
-"WHERE (ID_User1 = ? AND ID_User2 = ?)\n" +
-"OR(ID_User1 = ? AND ID_User2 = ?)");
-            preparedStatement.setInt(1, ID1);
-            preparedStatement.setInt(2, ID2);
-            preparedStatement.setInt(3, ID2);
-            preparedStatement.setInt(4, ID1);
-            System.out.println(preparedStatement);
-            preparedStatement.executeUpdate();
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
     }
 
     public int getRank(int ID) {
