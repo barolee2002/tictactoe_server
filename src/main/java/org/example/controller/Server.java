@@ -19,8 +19,6 @@ public class Server {
     public static volatile ServerThreadBus serverThreadBus;
     public static Socket socketOfServer;
     public static int ID_room;
-
-
     public static void main(String[] args) {
         ServerSocket listener = null;
         serverThreadBus = new ServerThreadBus();

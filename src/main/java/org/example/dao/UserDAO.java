@@ -234,7 +234,34 @@ public class UserDAO extends DAO{
         }
         return false;
     }
+    public void addFriendShip(int ID1, int ID2){
+        try {
+            PreparedStatement preparedStatement = con.prepareStatement("INSERT INTO friend(ID_User1, ID_User2)\n" +
+                    "VALUES (?,?)");
+            preparedStatement.setInt(1, ID1);
+            preparedStatement.setInt(2, ID2);
+            System.out.println(preparedStatement);
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
 
+    public void removeFriendship(int ID1, int ID2){
+        try {
+            PreparedStatement preparedStatement = con.prepareStatement("DELETE FROM friend\n" +
+                    "WHERE (ID_User1 = ? AND ID_User2 = ?)\n" +
+                    "OR(ID_User1 = ? AND ID_User2 = ?)");
+            preparedStatement.setInt(1, ID1);
+            preparedStatement.setInt(2, ID2);
+            preparedStatement.setInt(3, ID2);
+            preparedStatement.setInt(4, ID1);
+            System.out.println(preparedStatement);
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
     public int getRank(int ID) {
         int rank = 1;
         try {
